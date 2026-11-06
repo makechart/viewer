@@ -17,6 +17,9 @@
     "web",
     "CHANGELOG.md"
   ],
+  "scripts": {
+    "release": "npm publish --access public"
+  },
   "keywords": [
     "makechart",
     "chart",
