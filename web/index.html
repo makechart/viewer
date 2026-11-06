@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>mctest</title>
+<style>
+:root { --fg: #222; --dim: #888; --line: #ddd; --bg: #fff; --pass: #2b8a3e; --diff: #c92a2a; --new: #e67700; --near: #74b816; }
+* { box-sizing: border-box; }
+body { margin: 0; font: 13px/1.5 system-ui, sans-serif; color: var(--fg); background: var(--bg); }
+header { position: sticky; top: 0; z-index: 10; display: flex; gap: .6em; align-items: center; flex-wrap: wrap;
+  padding: .6em 1em; background: #f8f9fa; border-bottom: 1px solid var(--line); }
+header b { font-size: 1.1em; }
+header input { width: 16em; padding: .2em .4em; }
+button { padding: .15em .7em; font: inherit; border: 1px solid var(--line); border-radius: 3px; background: #fff; cursor: pointer; }
+button:hover { border-color: var(--fg); }
+#summary span { margin-right: .8em; }
+main { padding: 1em; display: flex; flex-direction: column; gap: 1.2em; }
+.case { border: 1px solid var(--line); border-radius: 4px; }
+.case > .head { display: flex; gap: .6em; align-items: center; padding: .4em .8em; border-bottom: 1px solid var(--line); background: #fcfcfc; }
+.case > .head .name { font-weight: bold; font-family: ui-monospace, monospace; }
+.badge { padding: 0 .5em; border-radius: 1em; color: #fff; background: var(--dim); font-size: .85em; }
+.badge.pass { background: var(--pass); } .badge.diff, .badge.error { background: var(--diff); } .badge.new { background: var(--new); } .badge.near { background: var(--near); }
+.case .panes { display: flex; gap: 1em; padding: .8em; overflow-x: auto; }
+.pane > .t { color: var(--dim); font-size: .85em; margin-bottom: .3em; }
+.snaps { display: flex; flex-direction: column; gap: .6em; }
+.snap > .label { color: var(--dim); font-size: .8em; font-family: ui-monospace, monospace; }
+.frame { position: relative; border: 1px dashed var(--line); overflow: hidden; }
+.case pre.diff { margin: 0; padding: .6em .8em; border-top: 1px solid var(--line); background: #fff5f5; white-space: pre-wrap; font-size: 12px; }
+.case pre.diff:empty { display: none; }
+.case.pass .panes .pane.baseline { display: none; }
+.case.near pre.diff { background: #f4fce3; }
+body.only-fail .case.pass, body.only-fail .case.near { display: none; }
+.stage { position: absolute; left: 0; top: 0; z-index: 100; background: var(--bg); }
+.stage:empty { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <b>mctest</b><span id="target"></span>
+  <input id="grep" placeholder="filter ( substring / regexp )">
+  <button id="run">run</button>
+  <label><input type="checkbox" id="only-fail"> 只看沒過的</label>
+  <button id="accept-all">accept all</button>
+  <span id="summary"></span>
+</header>
+<main id="cases"></main>
+<script src="/assets/lib/proxise/main/index.min.js"></script>
+<script src="/assets/lib/@loadingio/ldquery/main/index.min.js"></script>
+<script src="/assets/lib/ldview/main/index.min.js"></script>
+<script src="/assets/lib/@plotdb/semver/main/index.min.js"></script>
+<script src="/assets/lib/@plotdb/csscope/main/index.min.js"></script>
+<script src="/assets/lib/@plotdb/rescope/main/index.min.js"></script>
+<script src="/assets/lib/@plotdb/block/main/index.min.js"></script>
+<script src="/engine/suite.js"></script>
+<script src="/engine/ui.js"></script>
+</body>
+</html>

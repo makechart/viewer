@@ -1,0 +1,48 @@
+{
+  "name": "@makechart/viewer",
+  "version": "0.0.1",
+  "description": "makechart 圖表的 test suite engine: 用不同資料、參數跑圖, 比對輸出 snapshot, 並以 @plotdb/dash 測 crossfilter",
+  "homepage": "https://github.com/makechart/viewer",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/makechart/viewer"
+  },
+  "bin": {
+    "mctest": "bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "src",
+    "web",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "makechart",
+    "chart",
+    "test",
+    "snapshot"
+  ],
+  "author": "zbryikt",
+  "license": "MIT",
+  "dependencies": {
+    "@loadingio/ldquery": "^3.0.7",
+    "@makechart/base": "^0.1.1",
+    "@plotdb/block": "^5.3.0",
+    "@plotdb/chart": "^3.5.0",
+    "@plotdb/csscope": "^5.0.3",
+    "@plotdb/konfig": "^4.11.1",
+    "@plotdb/layout": "^0.0.12",
+    "@plotdb/rescope": "^5.0.12",
+    "@plotdb/semver": "^0.0.3",
+    "@xlfont/choose": "^0.0.32",
+    "@xlfont/load": "^2.1.6",
+    "ldcolor": "^1.1.3",
+    "ldview": "^1.7.2",
+    "livescript": "^1.6.0",
+    "playwright-core": "^1.65.0",
+    "proxise": "^1.0.1",
+    "wrap-svg-text": "^0.0.8",
+    "zmgr": "^2.2.3"
+  }
+}
