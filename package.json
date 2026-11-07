@@ -1,6 +1,6 @@
 {
   "name": "@makechart/viewer",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "makechart 圖表的 test suite engine: 用不同資料、參數跑圖, 比對輸出 snapshot, 並以 @plotdb/dash 測 crossfilter",
   "homepage": "https://github.com/makechart/viewer",
   "repository": {
