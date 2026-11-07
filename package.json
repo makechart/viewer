@@ -47,5 +47,8 @@
     "proxise": "^1.0.1",
     "wrap-svg-text": "^0.0.8",
     "zmgr": "^2.2.3"
+  },
+  "devDependencies": {
+    "fedep": "^1.9.0"
   }
 }
