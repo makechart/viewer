@@ -1,5 +1,11 @@
 # Change Logs
 
+## v0.0.4
+
+ - upgrade `@makechart/base` to `^0.2.0` ( `lite/index.html` / `d3/index.html` ) and `@plotdb/chart` to
+   `^3.7.0` ( `chart.utils` ), so charts extending them can be tested without linking local packages
+
+
 ## v0.0.3
 
  - ignore empty `style=""` attributes when serializing and comparing: whether one is left depends on

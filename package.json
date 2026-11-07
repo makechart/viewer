@@ -30,9 +30,9 @@
   "license": "MIT",
   "dependencies": {
     "@loadingio/ldquery": "^3.0.7",
-    "@makechart/base": "^0.1.1",
+    "@makechart/base": "^0.2.0",
     "@plotdb/block": "^5.3.0",
-    "@plotdb/chart": "^3.5.0",
+    "@plotdb/chart": "^3.7.0",
     "@plotdb/csscope": "^5.0.3",
     "@plotdb/konfig": "^4.11.1",
     "@plotdb/layout": "^0.0.12",
