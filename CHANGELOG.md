@@ -1,5 +1,12 @@
 # Change Logs
 
+## v0.0.3
+
+ - ignore empty `style=""` attributes when serializing and comparing: whether one is left depends on
+   how a style was set before ( e.g. `style.x = ''` ), not on what is drawn. existing baselines that
+   still contain it compare equal without updating
+
+
 ## v0.0.2
 
  - add playground ( `/playground` in `mctest serve` ): apply any test case's data / config / size,

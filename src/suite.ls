@@ -122,7 +122,9 @@ mctest.serialize = serialize = (root) ->
     if n.nodeType != 1 => return
     tag = n.tagName
     if !n.namespaceURI or n.namespaceURI == "http://www.w3.org/1999/xhtml" => tag = tag.toLowerCase!
+    # 空的 style 屬性對畫面沒有作用, 有沒有留下來卻看設定過的歷程 ( 例如 style.x = '' 之前有沒有值 ), 略過
     attrs = Array.from(n.attributes)
+      .filter -> !(it.name == \style and !it.value.trim!)
       .map -> [it.name, it.value]
       .sort (a, b) -> if a.0 < b.0 => -1 else if a.0 > b.0 => 1 else 0
       .map ([k, v]) -> " #k=\"#{esc-attr v}\""
@@ -284,6 +286,8 @@ mctest.compare = (c, snaps) ->
     .then (r) -> if r.status == 204 => null else r.text!
     .then (baseline) ->
       if !(baseline?) => return {status: \new, current}
+      # 舊的 baseline 可能還留著空的 style 屬性 ( serialize 現在會略過 )
+      baseline = baseline.replace /\s+style=""/g, ''
       if baseline.trim! == current.trim! => return {status: \pass, current, baseline}
       a = baseline.trim!split \\n
       b = current.trim!split \\n
