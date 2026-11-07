@@ -27,6 +27,16 @@ makechart 圖表的 test suite engine。每張圖在自己的 repo 放 test case
 `npx mctest -h` 看全部選項。結束碼不是 0 代表有 case 失敗，失敗的 markup 與截圖放在 `test/output/`。
 
 
+## playground
+
+`npx mctest serve` 之後開 `/playground` ( UI 右上角也有連結 )，拿圖來玩：
+
+ - 上方選一個 test case 就套用它的資料、config 與大小；有 steps 的 ( 標 ▶ ) 可以按「跑 steps」，用真實時間看動畫
+ - 「換資料」可以換成 `mod.sample` 或 suite 裡任一份 data，設定保留
+ - 左側設定面板依 `mod.config` 自動產生 ( number / boolean / choice / color / format / text )；palette 給幾組現成的，font / quantity 沒有元件
+ - raw 用 CSV 編輯、binding 用 JSON，按「套用資料」
+ - 圖的容器可以拖右下角改大小；`window.chart` 是圖的實例，可以在 console 直接操作
+
 ## 依賴從哪裡來
 
 engine 自己起一個 server，前端依賴走與 makechart 相同的路徑 `/assets/lib/<name>/<version>/<path>`，版本一律忽略，依序找：
@@ -91,4 +101,5 @@ snapshot 一律由 headless 產生 ( viewport 1600x1000，DPR 預設 2，`--dpr`
  - `lib/server.js` — http server：依賴解析、test case 編譯、snapshot API
  - `lib/runner.js` — headless 瀏覽器 ( playwright-core )
  - `src/suite.ls` — 瀏覽器端 engine：case 定義、執行、正規化、比對
+ - `src/playground.ls`、`web/playground.html` — playground
  - `src/ui.ls`、`web/index.html` — UI ( headless 也是跑這頁 )

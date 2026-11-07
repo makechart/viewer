@@ -15,7 +15,8 @@
 //   --loose                    數字差在 tolerance 內 ( near ) 也算過. 預設不算: 真的差 1px 的改動也要抓到
 //   --dpr n                    headless 的 devicePixelRatio ( 預設 2, 同 Mac 螢幕 ). 文字寬度會隨它有小數誤差
 //   --headed                   run 時顯示瀏覽器視窗
-//   -v                         印出 404 與頁面的 console
+//   --offline                  本機找不到的模組不向 npm CDN 拿
+//   -v                         印出 404、從 CDN 拿的檔案與頁面的 console
 const fs = require('fs'), path = require('path');
 const {create, parseLinks} = require('../lib/server');
 const {Runner, writeSnapshot} = require('../lib/runner');
@@ -32,6 +33,7 @@ function parseArgs(argv) {
     else if (a === '-p' || a === '--port') o.port = +next();
     else if (a === '-o' || a === '--open') o.open = true;
     else if (a === '--ci') o.ci = true;
+    else if (a === '--offline') o.offline = true;
     else if (a === '--loose') o.loose = true;
     else if (a === '--dpr') o.dpr = +next();
     else if (a === '--browser') o.browser = next();
@@ -107,6 +109,6 @@ if (o.cmd === 'help') {
   process.exit(0);
 }
 if (!fs.existsSync('package.json')) { console.error('[mctest] run it in the root of a chart repo ( package.json not found )'); process.exit(2); }
-const srv = create({links: o.links, verbose: o.verbose});
+const srv = create({links: o.links, verbose: o.verbose, offline: o.offline});
 (o.cmd === 'serve' ? serve(o, srv) : run(o, srv).then(c => process.exit(c)))
   .catch(e => { console.error(e.stack || e); process.exit(1); });

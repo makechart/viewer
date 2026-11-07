@@ -1,0 +1,85 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>playground</title>
+<style>
+:root { --fg: #222; --dim: #888; --line: #ddd; --bg: #fff; --panel: #f8f9fa; --err: #c92a2a; }
+* { box-sizing: border-box; }
+body { margin: 0; font: 13px/1.5 system-ui, sans-serif; color: var(--fg); background: var(--bg); display: flex; flex-direction: column; height: 100vh; }
+header { display: flex; gap: .6em; align-items: center; flex-wrap: wrap; padding: .6em 1em; background: var(--panel); border-bottom: 1px solid var(--line); }
+header b { font-size: 1.1em; }
+header a { color: inherit; margin-left: auto; }
+.body { flex: 1; display: flex; min-height: 0; }
+aside { width: 340px; flex: none; overflow-y: auto; border-right: 1px solid var(--line); background: var(--panel); padding: .8em 1em 2em; }
+main { flex: 1; overflow: auto; padding: 1.5em; }
+h2 { font-size: .85em; margin: 1.4em 0 .4em; color: var(--dim); text-transform: uppercase; letter-spacing: .05em; }
+h2:first-child { margin-top: 0; }
+fieldset { border: 0; padding: 0; margin: 0 0 .4em; }
+legend { font-weight: bold; padding: .3em 0 .1em; font-size: .9em; }
+.row { display: flex; align-items: center; gap: .5em; padding: .15em 0 .15em .6em; }
+.row > label { flex: 0 0 7.5em; color: #555; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row > .ctrl { flex: 1; display: flex; gap: .4em; align-items: center; min-width: 0; }
+.row input[type=range] { flex: 1; min-width: 0; }
+.row .v { width: 3em; text-align: right; font-family: ui-monospace, monospace; font-size: .9em; }
+.row select, .row input[type=text] { width: 100%; min-width: 0; }
+select, button { font: inherit; }
+header select { max-width: 22em; }
+textarea { width: 100%; font: 12px/1.4 ui-monospace, monospace; }
+#csv { height: 14em; }
+#binding { height: 8em; }
+button { padding: .15em .7em; border: 1px solid var(--line); border-radius: 3px; background: #fff; cursor: pointer; }
+button:hover:not(:disabled) { border-color: var(--fg); }
+button:disabled { opacity: .4; cursor: default; }
+.btns { display: flex; flex-wrap: wrap; gap: .4em; margin: .4em 0; }
+.hint { color: var(--dim); font-size: .85em; }
+#err { color: var(--err); white-space: pre-wrap; font-size: .85em; }
+#err:empty { display: none; }
+#stage { width: 640px; height: 400px; resize: both; overflow: hidden; border: 1px dashed var(--line); position: relative; }
+#size { color: var(--dim); font-size: .85em; margin-top: .3em; }
+#out { font: 12px/1.4 ui-monospace, monospace; color: #555; white-space: pre; }
+</style>
+</head>
+<body>
+<header>
+  <b>playground</b><span id="target"></span>
+  <select id="case"></select>
+  <button id="steps" disabled title="依序執行這個 case 的 steps ( 真實時間 )">跑 steps</button>
+  <select id="source"></select>
+  <a href="/">← cases</a>
+</header>
+<div class="body">
+  <aside>
+    <div id="err"></div>
+    <h2>設定</h2>
+    <div class="btns">
+      <button id="reset">回預設</button>
+      <button id="rerender">重畫</button>
+      <button id="dump">印出 config</button>
+    </div>
+    <div id="cfg"></div>
+    <h2>資料 ( raw )</h2>
+    <textarea id="csv" spellcheck="false"></textarea>
+    <h2>binding</h2>
+    <textarea id="binding" spellcheck="false"></textarea>
+    <div class="btns"><button id="apply">套用資料</button></div>
+    <div class="hint">raw 用 CSV 編輯, 看起來是數字的欄位會轉成數字.</div>
+  </aside>
+  <main>
+    <div id="stage"></div>
+    <div id="size"></div>
+    <pre id="out"></pre>
+  </main>
+</div>
+<script src="/assets/lib/proxise/main/index.min.js"></script>
+<script src="/assets/lib/@loadingio/ldquery/main/index.min.js"></script>
+<script src="/assets/lib/ldview/main/index.min.js"></script>
+<script src="/assets/lib/@plotdb/semver/main/index.min.js"></script>
+<script src="/assets/lib/@plotdb/csscope/main/index.min.js"></script>
+<script src="/assets/lib/@plotdb/rescope/main/index.min.js"></script>
+<script src="/assets/lib/@plotdb/block/main/index.min.js"></script>
+<script src="/engine/suite.js"></script>
+<script src="/engine/playground.js"></script>
+</body>
+</html>

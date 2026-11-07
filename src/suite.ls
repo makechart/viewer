@@ -10,8 +10,9 @@
 #   data     suite.data 裡的名字, 或直接給 {raw, binding}
 #   config   chart.config 的內容 ( 會跟 suite.config 深層合併 )
 #   size     [w, h] px, 預設 suite.size
-#   steps    [(chart, ctx) -> ...] 依序執行, 每步之後等畫面穩定. 可回傳 promise
-#            ctx.snap(label) 在當下多存一格 ( 預設只存最後的樣子 ). ctx.root 是這個 case 的容器
+#   steps    [(chart, ctx) -> ...] 依序執行, 每步之後等畫面穩定. 可回傳 promise. 只有一步時可以不包成陣列
+#            ctx.snap(label) 等畫面穩定後多存一格 ( 預設只存最後的樣子 ); ctx.capture(label) 不等不 flush,
+#            直接存當下 ( 配 chart.anim.step 驗證動畫中間格 ). ctx.root 是這個 case 的容器
 #   dash     {def, size} 用 @plotdb/dash 的 board 跑多張圖 ( 測 crossfilter ).
 #            此時 steps 拿到的是 (board, ctx), ctx.chart(id) 取得某個 panel 的圖
 #   skip     true 時略過
@@ -62,16 +63,21 @@ mctest.file = (n) -> n.replace /[^\w.=,+@-]+/g, \_
 
 wait = (t = 0) -> new Promise (res) -> setTimeout res, t
 
-# 模擬拖曳 ( 例如 brush ). p0 / p1 是 node 內的相對座標 ( 0 ~ 1 )
+# 模擬拖曳 ( 例如 brush ). p0 / p1 是 node 內的相對座標 ( 0 ~ 1 ).
+# 跟真的滑鼠一樣 pointer 與 mouse 事件都送: chart.utils.brush 聽 pointer, d3-brush 聽 mouse
 mctest.drag = (node, p0, p1, n = 6) ->
   r = node.getBoundingClientRect!
-  pt = ([x, y]) -> {clientX: r.left + r.width * x, clientY: r.top + r.height * y}
-  opt = {bubbles: true, cancelable: true, pointerId: 1, isPrimary: true, button: 0, buttons: 1}
-  node.dispatchEvent new PointerEvent \pointerdown, ({} <<< opt <<< pt p0)
+  # 座標取整: MouseEvent 的 clientX 是整數, PointerEvent 可以有小數, 不取整兩邊收到的位置會不一樣
+  pt = ([x, y]) -> {clientX: Math.round(r.left + r.width * x), clientY: Math.round(r.top + r.height * y)}
+  opt = {bubbles: true, cancelable: true, view: window, pointerId: 1, isPrimary: true, button: 0, buttons: 1}
+  fire = (target, type, p, extra = {}) ->
+    o = {} <<< opt <<< pt(p) <<< extra
+    target.dispatchEvent new PointerEvent "pointer#type", o
+    target.dispatchEvent new MouseEvent "mouse#type", o
+  fire node, \down, p0
   for i from 1 to n =>
-    p = [p0.0 + (p1.0 - p0.0) * i / n, p0.1 + (p1.1 - p0.1) * i / n]
-    window.dispatchEvent new PointerEvent \pointermove, ({} <<< opt <<< pt p)
-  window.dispatchEvent new PointerEvent \pointerup, ({} <<< opt <<< pt(p1) <<< {buttons: 0})
+    fire window, \move, [p0.0 + (p1.0 - p0.0) * i / n, p0.1 + (p1.1 - p0.1) * i / n]
+  fire window, \up, p1, {buttons: 0}
   node.dispatchEvent new MouseEvent \click, ({bubbles: true, cancelable: true} <<< pt p1)
 
 # ---------------------------------------------------------------- normalize
@@ -80,9 +86,27 @@ mctest.drag = (node, p0, p1, n = 6) ->
 volatile = [
   # ldview 的 scope 屬性名字是亂數
   [/ld-scope-ld-[a-z0-9]+/g, \ld-scope-ld-x]
+  # @plotdb/csscope 的 scope 名稱是依賴的路徑編出來的 ( base64, _Q 開頭 ). 換依賴 ( 例如 d3 版換成 lite ) 就會變,
+  # 跟畫面無關, 拿掉
+  [/\s*\b_Q[A-Za-z0-9_]+/g, '']
   # @plotdb/chart 的 legend id ( Math.random )
   [/(pdlg-[a-z]+-)[a-z0-9]+(-)/g, '$1x$2']
 ]
+
+# 顏色統一寫成 rgb(): d3 transition 補完會留下 rgb(...), 直接設的是 #hex - 同一個顏色不該算不同
+hex-rgb = (m, h) ->
+  if h.length == 3 => h = h.split('').map(-> it + it).join('')
+  "rgb(#{parseInt(h.substr(0, 2), 16)}, #{parseInt(h.substr(2, 2), 16)}, #{parseInt(h.substr(4, 2), 16)})"
+volatile.push [/#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b(?![0-9a-fA-F])/g, hex-rgb]
+
+# transform 統一寫法: d3 的 transform 補間會把結果重排成 translate(x,y) ( 逗號後沒空白 ), 恆等轉換則是空字串
+norm-transform = (m, v) ->
+  v = v.replace(/\s*,\s*/g, ',').replace(/\(\s+/g, '(').replace(/\s+\)/g, ')').replace(/\s+/g, ' ').trim!
+  if /^translate\(0(,0)?\)$/.test(v) => v = ''
+  "transform=\"#v\""
+volatile.push [/transform="([^"]*)"/g, norm-transform]
+# rgb() / rgba() 統一成逗號後一個空白 ( d3 的寫法 )
+volatile.push [/(rgba?)\(\s*([^)]*?)\s*\)/g, (m, f, v) -> "#f(#{v.split(/\s*,\s*/).join(', ')})"]
 
 # DOM -> markup. 自己序列化而不用 innerHTML: 屬性依名字排序 ( 設定順序會隨執行順序變, 例如頁面上
 # 第一張圖跟之後的不同 ), 一個 tag 一行方便 diff. 產生的 markup 可以直接塞回 innerHTML 重現畫面
@@ -159,7 +183,7 @@ settle = (root, list, quiet = 250, limit = 10000) ->
 mctest.suite = (s = {}) ->
   s.size = s.size or [480, 320]
   mctest.suites.push s
-  (s.cases or []).map (c) ->
+  ([].concat(s.cases or [])).map (c) ->
     mctest.cases.push ({} <<< c <<< {suite: s, file: mctest.file(c.name)})
   s
 
@@ -207,12 +231,16 @@ mctest.run-case = (c, root) ->
     root: root
     snap: (label) ->
       settle(root, list, q).then -> snaps.push {label: (label or "step#{snaps.length}"), markup: normalize(root, s.normalize)}
+    # 不等穩定、不 flush, 直接存當下的樣子 ( 配合 chart.anim.step 驗證動畫的中間格 )
+    capture: (label) ->
+      snaps.push {label: (label or "frame#{snaps.length}"), markup: normalize(root, s.normalize)}
+      Promise.resolve!
     drag: mctest.drag
     wait: wait
     random: mctest.random
   run-steps = (target) ->
     # 先等第一次畫完, step 才找得到節點
-    (c.steps or []).reduce ((p, f) -> p.then(-> f target, ctx).then -> settle(root, list, q)), settle(root, list, q)
+    ([].concat(c.steps or [])).reduce ((p, f) -> p.then(-> f target, ctx).then -> settle(root, list, q)), settle(root, list, q)
       .then -> snaps.push {label: \final, markup: normalize(root, s.normalize)}
       .then -> {snaps, target}
   if c.dash => return load-dash!then (dash) ->
