@@ -214,7 +214,14 @@ mctest.boot!
     $(\#target).textContent = "#{mctest.info.name}@#{mctest.info.version}"
     document.title = "playground · #{mctest.info.name}"
     mctest.manager.get {name: mctest.info.name, version: \main}
-  .then (bc) -> bc.create {data: {}}
+  # ?block=<json>: 圖的 block data, 例如 ?block={"level":"town"}
+  .then (bc) ->
+    data = {}
+    try
+      data = JSON.parse((new URLSearchParams(location.search)).get(\block) or '{}')
+    catch e
+      console.warn "[mctest] bad ?block=", e
+    bc.create {data}
   .then (bi) -> bi.attach({root: $(\#stage)}).then -> bi.interface!
   .then (chart) ->
     pg.chart = window.chart = chart

@@ -78,6 +78,8 @@ engine 自己起一個 server，前端依賴走與 makechart 相同的路徑 `/a
  - `ctx`：`root` ( 這個 case 的容器 )、`snap(label)`、`drag(node, [x0, y0], [x1, y1])` ( 相對座標 0~1，送 pointer 事件 )、`chart(id)` ( dash 時取某個 panel 的圖 )、`wait(ms)`、`random(seed)`。
  - helper：`mctest.combo {type: <[column bar]>, multiple: <[stack group]>}` 產生所有組合，`mctest.label o` 把組合轉成名字，`mctest.random seed` 是固定種子的亂數。
  - `skip: true` 略過。`suite.chart` 預設是 package.json 的 name。
+ - `block`：圖的 block data ( 例如地圖的 `{level: \town}` )，suite 與 case 都可以給，case 的優先。
+   playground 用網址參數 `?block=<json>`。
 
 資料請用固定種子產生，否則每次跑都不一樣。
 

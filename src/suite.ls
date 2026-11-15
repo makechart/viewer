@@ -199,9 +199,11 @@ get-data = (s, d) ->
 
 chart-ref = (s) -> ({version: \main} <<< (s.chart or {name: mctest.info.name}))
 
-make-chart = (s, root) ->
+# block: 圖的 block data ( 例如地圖的 level ), suite 與 case 都可以給, case 的優先
+make-chart = (s, root, c = {}) ->
+  data = {} <<< (s.block or {}) <<< (c.block or {})
   mgr.get chart-ref(s)
-    .then (bc) -> bc.create {data: {}}
+    .then (bc) -> bc.create {data}
     .then (bi) -> bi.attach {root} .then -> bi.interface!
     .then (chart) ->
       if chart.anim => chart.anim.manual true
@@ -255,7 +257,7 @@ mctest.run-case = (c, root) ->
     list := -> board.panels.map -> (it.itf or {}).chart
     board.init!then -> settle root, list, q
     .then -> run-steps board
-  make-chart s, root
+  make-chart s, root, c
     .then (chart) ->
       charts.push chart
       cfg = merge {}, (s.config or {}), (c.config or {})
