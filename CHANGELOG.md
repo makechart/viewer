@@ -1,5 +1,12 @@
 # Change Logs
 
+## v0.0.5
+
+ - `block`: the chart's block data ( e.g. a map's `{level: 'town'}` ), on the suite or on a case ( the case
+   wins ). charts that take block data could only be tested with an empty one
+ - playground: `?block=<json>` for the same
+
+
 ## v0.0.4
 
  - upgrade `@makechart/base` to `^0.2.0` ( `lite/index.html` / `d3/index.html` ) and `@plotdb/chart` to
