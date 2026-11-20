@@ -80,8 +80,12 @@ engine 自己起一個 server，前端依賴走與 makechart 相同的路徑 `/a
  - `skip: true` 略過。`suite.chart` 預設是 package.json 的 name。
  - `block`：圖的 block data ( 例如地圖的 `{level: \town}` )，suite 與 case 都可以給，case 的優先。
    playground 用網址參數 `?block=<json>`。
+ - `timeout`：整個 case ( 載入、第一次畫完、所有 step ) 超過這麼多 ms 就算 `error`，訊息會寫停在哪一步。
+   suite 與 case 都可以給，預設 30000。
 
-資料請用固定種子產生，否則每次跑都不一樣。
+資料請用固定種子產生，否則每次跑都不一樣。在 step 裡 ( 執行時 ) 才產生的資料要用自己的種子
+( `mctest.random seed` )，不要跟載入時共用同一個產生器：共用的話數字會隨之前跑過哪些 case 而變，
+單獨跑 ( `-g` ) 跟全部跑的結果會不同。
 
 
 ## 怎麼比對

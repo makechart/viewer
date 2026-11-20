@@ -161,22 +161,30 @@ mctest.split-snaps = (text) ->
 # 150ms 後才發 filter, board 再重畫 ). 期間每一幀都 flush, 有 anim 的圖補間會直接跳到終點.
 # list 是回傳目前所有圖的 function ( dash 的 panel 圖是非同步建立的, 每次都重抓 ),
 # 新抓到的圖一律切 manual. 沒有 anim 的圖 ( 還在用 d3 transition ) 只能靠 quiet 等它跑完
+# rAF 停掉時 ( 例如頁面被當成在背景 ) tick 不會再跑, 所以另用 timer 保底, limit 一定會生效
 settle = (root, list, quiet = 250, limit = 10000) ->
   new Promise (res) ->
     last = performance.now!
     t0 = last
     mo = new MutationObserver -> last := performance.now!
     mo.observe root, {subtree: true, childList: true, attributes: true, characterData: true}
+    done = false
+    finish = ->
+      if done => return
+      done := true
+      mo.disconnect!
+      clearTimeout timer
+      res!
+    timer = setTimeout finish, limit + 1000
     tick = ->
+      if done => return
       charts = list!filter -> it
       charts.map ->
         if !it.anim => return
         if !it.anim._manual => it.anim.manual true
         it.anim.flush!
       now = performance.now!
-      if now - last >= quiet or now - t0 > limit =>
-        mo.disconnect!
-        return res!
+      if now - last >= quiet or now - t0 > limit => return finish!
       requestAnimationFrame tick
     requestAnimationFrame tick
 
@@ -223,7 +231,20 @@ load-dash = ->
     document.head.appendChild js
 
 # 跑一個 case. root 是給它用的容器 ( 大小由這裡設 ). 回傳 {snaps, chart | board}
+# 整個 case 超過 timeout ms ( case 或 suite 的 `timeout`, 預設 30000 ) 就算 error, 並寫出停在哪一步,
+# 否則一個不會 resolve 的 step ( 或載不到的模組 ) 會讓整個 run 停住
 mctest.run-case = (c, root) ->
+  t = c.timeout ? c.suite.timeout ? 30000
+  at = {v: \load}
+  timer = null
+  Promise.race [
+    run-case c, root, at
+    new Promise (res, rej) ->
+      timer := setTimeout (-> rej new Error("[mctest] timeout after #{t}ms ( at #{at.v} )")), t
+  ]
+    .finally -> clearTimeout timer
+
+run-case = (c, root, at) ->
   s = c.suite
   [w, h] = c.size or (c.dash and c.dash.size) or s.size
   root.style <<< {width: "#{w}px", height: "#{h}px"}
@@ -244,7 +265,8 @@ mctest.run-case = (c, root) ->
     random: mctest.random
   run-steps = (target) ->
     # 先等第一次畫完, step 才找得到節點
-    ([].concat(c.steps or [])).reduce ((p, f) -> p.then(-> f target, ctx).then -> settle(root, list, q)), settle(root, list, q)
+    at.v = \render
+    ([].concat(c.steps or [])).reduce ((p, f, i) -> p.then(-> at.v = "step #{i + 1}"; f target, ctx).then -> settle(root, list, q)), settle(root, list, q)
       .then -> snaps.push {label: \final, markup: normalize(root, s.normalize)}
       .then -> {snaps, target}
   if c.dash => return load-dash!then (dash) ->
@@ -252,7 +274,7 @@ mctest.run-case = (c, root) ->
       root: root
       manager: mgr
       def: JSON.parse(JSON.stringify(c.dash.def))
-      panel: {name: "@plotdb/dash", version: \main, path: "web/static/initiative/1st/block/panel/0.0.1/index.html"}
+      panel: {name: "@plotdb/dash", version: \main, path: "block/panel/index.html"}
     ctx.chart = (id) -> ((board.panels.filter(-> it.id == id).0 or {}).itf or {}).chart
     list := -> board.panels.map -> (it.itf or {}).chart
     board.init!then -> settle root, list, q

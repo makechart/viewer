@@ -1,5 +1,14 @@
 # Change Logs
 
+## v0.0.6
+
+ - dash cases load the panel block from `@plotdb/dash`'s `block/panel/index.html` ( versioned in the package )
+   instead of `web/static/initiative/1st/...`, a generated demo path that has been renamed
+ - add `timeout` ( case or suite, default 30000ms ): a case that takes longer is an `error` naming the stage
+   it stopped at ( `load`, `render` or `step n` ), instead of hanging the whole run
+ - `settle` also resolves by a timer after `limit`, in case `requestAnimationFrame` stops firing
+
+
 ## v0.0.5
 
  - `block`: the chart's block data ( e.g. a map's `{level: 'town'}` ), on the suite or on a case ( the case
