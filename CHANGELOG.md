@@ -1,5 +1,16 @@
 # Change Logs
 
+## v0.0.8
+
+ - every case ( except dash ) checks the chart's `mod.tabinfo` ( section descriptions, @plotdb/chart >= 3.17.0 ):
+   a key matching no section in `mod.config` makes the case an `error`, listing the keys. sections are decided by
+   konfig's own rule ( `konfig.tab.check` ), so the test page now loads `@plotdb/konfig`
+   - konfig without `konfig.tab` ( < 4.12.0 ) only warns and skips. after upgrading viewer, run `npm update` so the
+     chart repo's konfig ( pulled in by @plotdb/chart ) is upgraded too - `node_modules` of the chart repo is
+     searched before viewer's own
+ - upgrade `@plotdb/konfig` to `^4.12.0` and `@plotdb/chart` to `^3.17.0`
+
+
 ## v0.0.7
 
  - dash cases load `@plotdb/dash` from `index.min.js` / `index.min.css` instead of `web/static/js/dash.js` /

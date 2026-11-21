@@ -231,6 +231,15 @@ load-dash = ->
     js.onerror = -> rej new Error("[mctest] @plotdb/dash not found - link it with `-l @plotdb/dash:<dir>`")
     document.head.appendChild js
 
+# mod.tabinfo ( 段落說明, 見 @plotdb/chart 的 spec ) 的 key 要對得到 mod.config 裡的段落, 否則宿主拿到的說明
+# 掛不上去. 怎麼算段落照 konfig 自己的規則 ( konfig.tab.check, konfig >= 4.12.0 ), 不在這裡另寫一份
+check-tabinfo = (chart) ->
+  mod = chart.mod or {}
+  if !mod.tabinfo => return
+  if !(window.konfig and konfig.tab) => return console.warn "[mctest] konfig.tab not found ( konfig >= 4.12.0 ), skip tabinfo check"
+  bad = konfig.tab.check mod.config, mod.tabinfo
+  if bad.length => throw new Error("[mctest] mod.tabinfo has keys matching no section in mod.config: #{bad.join ', '}")
+
 # 跑一個 case. root 是給它用的容器 ( 大小由這裡設 ). 回傳 {snaps, chart | board}
 # 整個 case 超過 timeout ms ( case 或 suite 的 `timeout`, 預設 30000 ) 就算 error, 並寫出停在哪一步,
 # 否則一個不會 resolve 的 step ( 或載不到的模組 ) 會讓整個 run 停住
@@ -288,6 +297,7 @@ run-case = (c, root, at) ->
       d = get-data s, c.data
       chart.set-raw d.raw, d.binding
       if d.subset => chart.subset.set d.subset
+      check-tabinfo chart
       run-steps chart
 
 # 跟 snapshot 比對. 回傳 {status, current, baseline, line, expect, actual, delta}

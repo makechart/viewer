@@ -100,6 +100,10 @@ snapshot 一律由 headless 產生 ( viewport 1600x1000，DPR 預設 2，`--dpr`
 
 文字寬度跟字型、瀏覽器版本有關，不同機器 ( 例如 CI 的 linux ) 需要各自的 baseline，或固定瀏覽器與字型。
 
+## 自動檢查
+
+每個 case ( dash 以外 ) 第一次畫之前，會檢查圖表的 `mod.tabinfo` ( 段落說明，見 @plotdb/chart 的 spec )：每個 key 都要對得到 `mod.config` 裡的一個段落，對不到的 case 會是 `error`，並列出那些 key。怎麼算段落照 konfig 的規則 ( `konfig.tab.check`，konfig >= 4.12.0 )。找到的 konfig 太舊時只警告並略過，升級 viewer 後跑 `npm update` 讓 konfig 一起升上來。
+
 
 ## 檔案
 
