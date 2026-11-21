@@ -1,5 +1,13 @@
 # Change Logs
 
+## v0.0.7
+
+ - dash cases load `@plotdb/dash` from `index.min.js` / `index.min.css` instead of `web/static/js/dash.js` /
+   `web/static/css/dash.css`. dash now builds into `dist/` ( flattened to the package root on publish ), and
+   `web/static/` is not versioned or published - a linked repo only worked by reading a stale local build,
+   and the published package would not have loaded at all. a linked dir still resolves `dist/` first
+
+
 ## v0.0.6
 
  - dash cases load the panel block from `@plotdb/dash`'s `block/panel/index.html` ( versioned in the package )

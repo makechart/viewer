@@ -217,15 +217,16 @@ make-chart = (s, root, c = {}) ->
       if chart.anim => chart.anim.manual true
       chart
 
+# dash 的產物在 dist/ ( 發佈時攤平到套件根目錄 ). link 本地目錄時 server 會先找 dist/, 兩種都是同一個路徑
 load-dash = ->
   if mctest._dash => return mctest._dash
-  base = "/assets/lib/@plotdb/dash/main/web/static"
+  base = "/assets/lib/@plotdb/dash/main"
   mctest._dash = new Promise (res, rej) ->
     css = document.createElement \link
-    css <<< {rel: \stylesheet, href: "#base/css/dash.css"}
+    css <<< {rel: \stylesheet, href: "#base/index.min.css"}
     document.head.appendChild css
     js = document.createElement \script
-    js.src = "#base/js/dash.js"
+    js.src = "#base/index.min.js"
     js.onload = -> res window.dash
     js.onerror = -> rej new Error("[mctest] @plotdb/dash not found - link it with `-l @plotdb/dash:<dir>`")
     document.head.appendChild js
