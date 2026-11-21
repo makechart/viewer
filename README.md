@@ -23,19 +23,22 @@ makechart 圖表的 test suite engine。每張圖在自己的 repo 放 test case
     npx mctest -g stack        # 只跑名字含 stack 的 ( 也可以是 regexp )
     npx mctest --ci            # 沒有 snapshot 也算失敗
     npx mctest serve -o        # 開 UI: 並排看 current / baseline, accept
+    npx mctest serve -o --no-run      # 開 UI 但不自動跑 case ( 網址 ?norun ), 按 run 才跑
+    npx mctest serve -o --playground  # 直接開 playground
 
 `npx mctest -h` 看全部選項。結束碼不是 0 代表有 case 失敗，失敗的 markup 與截圖放在 `test/output/`。
 
 
 ## playground
 
-`npx mctest serve` 之後開 `/playground` ( UI 右上角也有連結 )，拿圖來玩：
+`npx mctest serve -o --playground` 直接開，或 `npx mctest serve` 之後開 `/playground` ( UI 右上角也有連結 )，拿圖來玩：
 
  - 上方選一個 test case 就套用它的資料、config 與大小；有 steps 的 ( 標 ▶ ) 可以按「跑 steps」，用真實時間看動畫
  - 「換資料」可以換成 `mod.sample` 或 suite 裡任一份 data，設定保留
- - 左側設定面板依 `mod.config` 自動產生 ( number / boolean / choice / color / format / text )；palette 給幾組現成的，font / quantity 沒有元件
+ - 圖預設填滿可用空間；關掉「填滿視窗」改用 case 的大小，可以拖右下角改
+ - 左側設定面板依 `mod.config` 自動產生：最上層每個段落一張可收合的卡片，附上 `mod.tabinfo` 的段落說明與各項的 `desc` ( 右上角「說明」可關 )。元件有 number / boolean / choice / color / format / text / quantity ( 數字 + 單位 ) / font ( 字型名稱 )；palette 給幾組現成的
  - raw 用 CSV 編輯、binding 用 JSON，按「套用資料」
- - 圖的容器可以拖右下角改大小；`window.chart` 是圖的實例，可以在 console 直接操作
+ - `window.chart` 是圖的實例，可以在 console 直接操作
 
 ## 依賴從哪裡來
 

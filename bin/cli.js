@@ -5,6 +5,8 @@
 //   npx mctest -u              不一致的也直接更新 snapshot
 //   npx mctest -g stack        只跑名字含 stack 的 ( 也可以是 regexp )
 //   npx mctest serve [-o]      開 UI 看圖、比對、accept ( accept 時用 headless 重跑再存 )
+//   npx mctest serve -o --no-run      UI 開啟時不自動跑 case, 按 run 才跑 ( 同網址加 ?norun )
+//   npx mctest serve -o --playground  直接開 playground
 //
 // 共用選項:
 //   -l name:dir[;name:dir]     本地目錄取代 node_modules 裡的版本 ( 同 fedep -l, 有 dist/ 用 dist/ )
@@ -22,7 +24,7 @@ const {create, parseLinks} = require('../lib/server');
 const {Runner, writeSnapshot} = require('../lib/runner');
 
 function parseArgs(argv) {
-  const o = {cmd: 'run', links: {}, grep: '', update: false, ci: false, loose: false, dpr: 2, headed: false, verbose: false, open: false};
+  const o = {cmd: 'run', links: {}, grep: '', update: false, ci: false, loose: false, dpr: 2, headed: false, verbose: false, open: false, page: ''};
   const links = [process.env.MCTEST_LINK || ''];
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i], next = () => argv[++i];
@@ -32,6 +34,8 @@ function parseArgs(argv) {
     else if (a === '-l' || a === '--link') links.push(next());
     else if (a === '-p' || a === '--port') o.port = +next();
     else if (a === '-o' || a === '--open') o.open = true;
+    else if (a === '--playground') o.page = 'playground';
+    else if (a === '--no-run') o.page = o.page || '?norun';
     else if (a === '--ci') o.ci = true;
     else if (a === '--offline') o.offline = true;
     else if (a === '--loose') o.loose = true;
@@ -94,7 +98,7 @@ async function serve(o, srv) {
     rs.filter(r => r.current).forEach(r => writeSnapshot(srv, r));
     return rs.map(r => ({name: r.name, file: r.file, status: r.current ? 'saved' : r.status, error: r.error}));
   };
-  const url = `http://localhost:${port}/`;
+  const url = `http://localhost:${port}/${o.page}`;
   console.log(`[mctest] ${srv.pkg.name} -> ${url}`);
   for (const [k, v] of Object.entries(srv.links)) console.log(`[mctest] link ${k} -> ${v}`);
   if (o.open) {

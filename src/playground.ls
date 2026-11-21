@@ -3,7 +3,7 @@
 #  - 資料與設定的起點直接取自 chart 的 test case ( test/index.ls ) 與 mod.sample, 不必另外準備
 #  - 選一個 case 就套用它的資料、config 與大小; 有 steps 的可以按「跑 steps」看動畫
 #  - 設定面板依 mod.config 自動產生 ( number / boolean / choice / color / format / text ),
-#    font / palette / quantity 沒有元件, palette 給幾組現成的
+#    font ( 字型名稱 ) / quantity ( 數字 + 單位 ), palette 給幾組現成的. 預設把圖放大到填滿可用空間
 #  - 資料用 CSV 編輯 ( raw ), binding 用 JSON. 動畫是真實時間, 不切 manual
 
 $ = (s) -> document.querySelector s
@@ -79,22 +79,32 @@ palettes =
   "冷色": <[#264653 #2a9d8f #8ab17d #457b9d #1d3557 #a8dadc]>
   "暖色": <[#9b2226 #ae2012 #bb3e03 #ca6702 #ee9b00 #e9d8a6]>
 
+# 說明文字: desc 可以是字串或 {en, zh-TW}, 依瀏覽器語系挑
+lang = if /^zh/i.exec(navigator.language or '') => \zh-TW else \en
+desc-of = (d) ->
+  if !d => '' else if typeof(d) == \string => d else (d[lang] or d.en or d[Object.keys(d).0] or '')
+# key 轉成好讀的名字: minRadius / min-radius -> min radius
+title-of = (def, k) -> def.name or "#k".replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[-_]/g, ' ').toLowerCase!
+
 control = (def, path) ->
   v = get-at pg.chart.config!, path
-  row = el \div, {class: \row}
-  row.appendChild el(\label, {title: path.join(\.)}, path[* - 1])
+  frag = document.createDocumentFragment!
+  row = frag.appendChild el(\div, {class: \row})
+  d = desc-of def.desc
+  lb = row.appendChild el(\label, {title: path.join(\.) + (if d => "\n#d" else '')}, title-of(def, path[* - 1]))
+  if d => lb.classList.add \has-desc
   c = row.appendChild el(\div, {class: \ctrl})
   set = (v) -> pg.set path, v
   switch def.type
   | \number =>
     [min, max, step] = [(def.min ? 0), (def.max ? Math.max(100, (v or 0) * 2)), (def.step ? 1)]
     n = c.appendChild el(\input, {type: \range, min, max, step})
-    o = c.appendChild el(\span, {class: \v})
-    n.value = v ? min
-    o.textContent = n.value
-    n.oninput = -> o.textContent = n.value; set +n.value
+    o = c.appendChild el(\input, {type: \number, class: \num, step})
+    n.value = o.value = v ? min
+    n.oninput = -> o.value = n.value; set +n.value
+    o.onchange = -> if o.value != '' and !isNaN(+o.value) => n.value = o.value; set +o.value
   | \boolean =>
-    n = c.appendChild el(\input, {type: \checkbox})
+    n = c.appendChild el(\input, {type: \checkbox, class: \switch})
     n.checked = !!v
     n.onchange = -> set n.checked
   | \choice =>
@@ -105,43 +115,84 @@ control = (def, path) ->
     n.value = JSON.stringify v
     n.onchange = -> set JSON.parse(n.value)
   | \color =>
-    n = c.appendChild el(\input, {type: \color})
-    if /^#[0-9a-f]{6}$/i.exec(v or '') => n.value = v
-    n.oninput = -> set n.value
+    n = c.appendChild el(\input, {type: \color, class: \swatch})
+    hex = c.appendChild el(\span, {class: \hex}, v or '')
+    if /^#[0-9a-f]{6}$/i.exec(v or '') => n.value = v else n.classList.add \unset
+    n.oninput = -> n.classList.remove \unset; hex.textContent = n.value; set n.value
     b = c.appendChild el(\button, {}, \預設)
-    b.onclick = -> set def.default
-  | \format, \text =>
-    n = c.appendChild el(\input, {type: \text})
-    n.value = v ? ''
-    n.onchange = -> set n.value
+    b.onclick = -> hex.textContent = def.default or ''; set def.default
+  | \format, \text, \font =>
+    n = c.appendChild el(\input, {type: \text, placeholder: (if def.type == \font => 'font name' else '')})
+    n.value = if v and typeof(v) == \object => (v.name or '') else (v ? '')
+    n.onchange = -> set(if def.type == \font and !n.value => null else n.value)
+  # quantity: 數字 + 單位, 例如 1em / 16px
+  | \quantity =>
+    units = (def.units or []).map (u) -> if typeof(u) == \string => {name: u} else u
+    m = /^\s*(-?[\d.]+)\s*(.*)$/.exec("#{v ? def.default ? ''}") or [null, '', (units.0 or {}).name or '']
+    n = c.appendChild el(\input, {type: \number, step: \any})
+    n.value = m.1
+    u = c.appendChild el(\select, {class: \unit})
+    units.map -> u.appendChild el(\option, {value: it.name}, it.name)
+    u.value = m.2
+    upd = -> if n.value != '' => set "#{n.value}#{u.value}"
+    n.onchange = upd
+    u.onchange = ->
+      d = units.filter(-> it.name == u.value).0
+      if d and d.default? => n.value = d.default
+      upd!
   | otherwise => return null
-  row
+  if d => frag.appendChild el(\div, {class: \idesc}, d)
+  frag
 
-# 群組攤平成一層 ( legend 寫完整路徑 ), 只有子群組、沒有直接設定項的群組不出現
-build-panel = (o, path, root, fs) ->
+# 最上層的每個段落一張可收合的卡片 ( 最上層的設定項放在 general ), 裡面的子段落用小標題分開.
+# 段落說明取自 mod.tabinfo. 開合狀態記在 pg.open, 換 case / 回預設重畫面板時保留
+pg.open = new Set ['']
+tab-desc = (path) -> desc-of ((pg.chart.mod.tabinfo or {})[if path.length => path.join(\/) else \common] or {}).desc
+# 一個群組的內容: 直接的設定項, 再來是子群組 ( 小標題 + 遞迴 ). 回傳設定項總數
+fill-group = (o, path, box, depth) ->
+  cnt = 0
   subs = []
   for k, v of o =>
     p = path ++ [k]
-    if is-leaf v => (if fs and (r = control v, p) => fs.appendChild r)
-    else if v and typeof(v) == \object => subs.push [v, p]
-  if fs and fs.querySelector(\.row) => root.appendChild fs
+    if is-leaf v => (if (r = control v, p) => box.appendChild r; cnt++)
+    else if v and typeof(v) == \object and (depth or path.length) => subs.push [v, p]
   for [v, p] in subs =>
-    g = el \fieldset
-    g.appendChild el(\legend, {}, p.join \.)
-    build-panel v, p, root, g
+    h = el \div, {class: \sub}
+    h.appendChild el(\span, {}, p.slice(1).join(' / '))
+    if (d = tab-desc p) => h.appendChild el(\div, {class: \gdesc}, d)
+    body = el \div
+    if (n = fill-group v, p, body, depth + 1) => box.appendChild h; box.appendChild body; cnt += n
+  cnt
+card = (root, o, path) ->
+  key = path.join \/
+  g = el \details, {class: \grp}
+  if pg.open.has key => g.open = true
+  g.ontoggle = -> if g.open => pg.open.add key else pg.open.delete key
+  s = g.appendChild el(\summary)
+  s.appendChild el(\span, {class: \t}, if path.length => key else \general)
+  n = s.appendChild el(\span, {class: \n})
+  if (d = tab-desc path) => g.appendChild el(\div, {class: \gdesc}, d)
+  if !(n.textContent = fill-group o, path, g, 0) => return
+  root.appendChild g
+build-panel = (o, root) ->
+  card root, o, []
+  for k, v of o => if v and typeof(v) == \object and !is-leaf(v) => card root, v, [k]
 
 render-panel = ->
   root = $ \#cfg
   root.textContent = ''
-  row = root.appendChild el(\div, {class: \row})
-  row.appendChild el(\label, {}, \palette)
-  sel = row.appendChild(el \div, {class: \ctrl}).appendChild el(\select)
-  for k of palettes => sel.appendChild el(\option, {value: k}, k)
-  sel.onchange = ->
-    p = palettes[sel.value]
-    pg.set [\palette], (if p => {key: sel.value, colors: p} else null)
-  # 最上層的設定項放在沒有 legend 的那一組
-  build-panel pg.chart.mod.config, [], root, el(\fieldset)
+  # palette: 一排色條
+  cur = ((pg.chart.config! or {}).palette or {}).key or "預設"
+  pals = root.appendChild el(\div, {class: \pals})
+  for let k, cs of palettes
+    b = pals.appendChild el(\div, {class: "pal#{if k == cur => ' on' else ''}", title: k})
+    strip = b.appendChild el(\div, {class: \strip})
+    (cs or []).map (c) -> strip.appendChild(el \i).style.background = c
+    b.appendChild el(\span, {}, k)
+    b.onclick = ->
+      Array.from(pals.childNodes).map -> it.classList.toggle \on, it == b
+      pg.set [\palette], (if cs => {key: k, colors: cs} else null)
+  build-panel pg.chart.mod.config, root
 
 # ---------------------------------------------------------------- chart
 redraw = ->
@@ -174,7 +225,10 @@ apply-editor = ->
     pg.chart.set-raw {raw: pg.data.raw, binding: pg.data.binding, subset: null}
   catch e => $(\#err).textContent = String(e.message or e)
 
-set-size = ([w, h]) -> $(\#stage).style <<< {width: "#{w}px", height: "#{h}px"}
+# 填滿 ( 預設 ) 時圖跟著可用空間; 關掉才用 case 的大小, 可以拖右下角改
+set-size = ([w, h]) ->
+  pg.size = [w, h]
+  $(\#stage).style <<< {width: "#{w}px", height: "#{h}px"}
 
 # 資料來源: mod.sample, 各 suite 的 data. case: 不含 dash 的 test case
 sources = ->
@@ -248,9 +302,14 @@ mctest.boot!
       console.log cfg
       $(\#out).textContent = JSON.stringify cfg, null, 2
     $(\#rerender).onclick = redraw
+    $(\#fit).onchange = ->
+      $(\main).classList.toggle \fit, $(\#fit).checked
+      if !$(\#fit).checked and pg.size => set-size pg.size
+    $(\#show-desc).onchange = -> document.body.classList.toggle \no-desc, !$(\#show-desc).checked
     new ResizeObserver(->
       b = $(\#stage).getBoundingClientRect!
-      $(\#size).textContent = "#{Math.round b.width} × #{Math.round b.height} · 拖右下角改大小"
+      fit = $(\#fit).checked
+      $(\#size).textContent = "#{Math.round b.width} × #{Math.round b.height}" + (if fit => '' else ' · 拖右下角改大小')
     ).observe $(\#stage)
     # 起點: 第一個 case, 沒有就用 sample
     if cases.length => sel.value = 0; pg.apply-case cases.0

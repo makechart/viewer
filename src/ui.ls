@@ -1,6 +1,7 @@
 # mctest UI: 列出所有 case, 跑完跟 snapshot 比對.
 #  - 一般開啟: 每個 case 並排顯示 current ( 目前的程式畫的, 最後一格是活的, 可以操作 ) 與 baseline
 #    ( 存下來的 markup 直接塞回頁面, chart 的 css 已經載入, 所以看起來就是當時的樣子 ). 可以 accept
+#  - ?norun: 不自動跑, 按 run 才跑 ( 只想進 playground 或只看某幾個 case 時 )
 #  - ?headless: 不自動跑, 由 cli 呼叫 mctest.ui.run 拿結果 ( cli 自己寫檔、截圖 )
 
 $ = (s) -> document.querySelector s
@@ -13,6 +14,7 @@ el = (tag, cls, txt) ->
 ui = mctest.ui = {results: {}}
 params = new URLSearchParams(location.search)
 headless = params.has \headless
+norun = params.has \norun
 
 frame-of = (c, markup) ->
   [w, h] = c.size or (c.dash and c.dash.size) or c.suite.size
@@ -142,7 +144,8 @@ mctest.boot!
       files = Array.from(document.querySelectorAll '.case.diff, .case.new').map -> it.dataset.file
       ui.accept mctest.cases.filter -> it.file in files
     ui.ready = true
-    if !headless => ui.run grep: $(\#grep).value
+    if norun => $(\#cases).textContent = "按 run 開始跑 case ( 可先填 filter )"
+    else if !headless => ui.run grep: $(\#grep).value
   .catch (e) ->
     ui.error = String(e.stack or e)
     $(\#cases).textContent = ui.error

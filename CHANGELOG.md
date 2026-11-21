@@ -1,5 +1,20 @@
 # Change Logs
 
+## v0.0.9
+
+ - `mctest serve --no-run`: the UI doesn't run the cases when opened ( `/?norun` ), press run to start - opening
+   the UI just to go to the playground no longer runs the whole suite first
+ - `mctest serve --playground`: open ( and print ) `/playground` instead of the UI
+ - playground: the chart fills the available space by default ( `填滿視窗` ); turn it off to use the case's size
+   and drag the corner to resize
+ - playground: restyle the config panel
+   - one collapsible card per top-level section ( top-level items go in `general` ), sub-sections as headings
+     inside it, with the section descriptions from `mod.tabinfo`
+   - item names from `name` or the key made readable, item descriptions ( `desc` ) under each item ( toggle `說明` )
+   - switches for booleans, a number box next to sliders, round color swatches with the value, palettes as color strips
+   - new widgets: `quantity` ( number + unit, e.g. font size ) and `font` ( font name )
+
+
 ## v0.0.8
 
  - every case ( except dash ) checks the chart's `mod.tabinfo` ( section descriptions, @plotdb/chart >= 3.17.0 ):

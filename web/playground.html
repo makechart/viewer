@@ -5,40 +5,77 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>playground</title>
 <style>
-:root { --fg: #222; --dim: #888; --line: #ddd; --bg: #fff; --panel: #f8f9fa; --err: #c92a2a; }
+:root { --fg: #222; --dim: #888; --line: #e2e4e8; --bg: #fff; --panel: #f4f5f7; --err: #c92a2a; --accent: #3b6fd8; --hover: #f6f8fb; }
 * { box-sizing: border-box; }
 body { margin: 0; font: 13px/1.5 system-ui, sans-serif; color: var(--fg); background: var(--bg); display: flex; flex-direction: column; height: 100vh; }
 header { display: flex; gap: .6em; align-items: center; flex-wrap: wrap; padding: .6em 1em; background: var(--panel); border-bottom: 1px solid var(--line); }
 header b { font-size: 1.1em; }
 header a { color: inherit; margin-left: auto; }
 .body { flex: 1; display: flex; min-height: 0; }
-aside { width: 340px; flex: none; overflow-y: auto; border-right: 1px solid var(--line); background: var(--panel); padding: .8em 1em 2em; }
-main { flex: 1; overflow: auto; padding: 1.5em; }
-h2 { font-size: .85em; margin: 1.4em 0 .4em; color: var(--dim); text-transform: uppercase; letter-spacing: .05em; }
+aside { width: 380px; flex: none; overflow-y: auto; border-right: 1px solid var(--line); background: var(--panel); padding: .8em .8em 2em; }
+main { flex: 1; overflow: auto; padding: 1.2em; display: flex; flex-direction: column; min-width: 0; }
+h2 { font-size: .8em; margin: 1.4em .2em .5em; color: var(--dim); text-transform: uppercase; letter-spacing: .06em; }
 h2:first-child { margin-top: 0; }
-fieldset { border: 0; padding: 0; margin: 0 0 .4em; }
-legend { font-weight: bold; padding: .3em 0 .1em; font-size: .9em; }
-.row { display: flex; align-items: center; gap: .5em; padding: .15em 0 .15em .6em; }
-.row > label { flex: 0 0 7.5em; color: #555; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.row > .ctrl { flex: 1; display: flex; gap: .4em; align-items: center; min-width: 0; }
-.row input[type=range] { flex: 1; min-width: 0; }
-.row .v { width: 3em; text-align: right; font-family: ui-monospace, monospace; font-size: .9em; }
-.row select, .row input[type=text] { width: 100%; min-width: 0; }
-select, button { font: inherit; }
-header select { max-width: 22em; }
-textarea { width: 100%; font: 12px/1.4 ui-monospace, monospace; }
+/* 設定面板: 每個段落一張可收合的卡片 */
+details.grp { background: #fff; border: 1px solid var(--line); border-radius: 8px; margin: 0 0 .5em; overflow: hidden; }
+details.grp > summary { list-style: none; cursor: pointer; padding: .5em .8em; display: flex; align-items: center; gap: .5em; user-select: none; }
+details.grp > summary::-webkit-details-marker { display: none; }
+details.grp > summary::before { content: ""; width: .45em; height: .45em; border: solid var(--dim); border-width: 0 1.5px 1.5px 0; transform: rotate(-45deg); transition: transform .15s; flex: none; }
+details.grp[open] > summary::before { transform: rotate(45deg); }
+details.grp > summary .t { font-weight: 600; }
+details.grp > summary .n { margin-left: auto; color: var(--dim); font-size: .85em; }
+details.grp[open] > summary { border-bottom: 1px solid var(--line); }
+details.grp .gdesc { color: var(--dim); font-size: .85em; padding: .4em .8em 0; }
+.row { display: flex; align-items: center; gap: .6em; padding: .3em .8em; min-height: 2.3em; }
+.row:hover { background: var(--hover); }
+.row > label { flex: 0 0 8.5em; color: #444; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row > label.has-desc { text-decoration: underline dotted #bbb; text-underline-offset: 3px; cursor: help; }
+.row > .ctrl { flex: 1; display: flex; gap: .5em; align-items: center; min-width: 0; }
+.idesc { color: var(--dim); font-size: .8em; padding: 0 .8em .35em 9.9em; margin-top: -.2em; line-height: 1.35; }
+body.no-desc .idesc { display: none; }
+select, button, input { font: inherit; color: inherit; }
+.ctrl select, .ctrl input[type=text], .ctrl input[type=number] { width: 100%; min-width: 0; padding: .25em .45em; border: 1px solid var(--line); border-radius: 5px; background: #fff; outline: none; }
+.ctrl select:focus, .ctrl input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59,111,216,.15); }
+.ctrl input[type=range] { flex: 1; min-width: 0; accent-color: var(--accent); }
+.ctrl input.num { flex: none; width: 4.6em; text-align: right; font-family: ui-monospace, monospace; font-size: .92em; }
+.ctrl select.unit { flex: none; width: 4.2em; }
+/* boolean: 開關 */
+input.switch { appearance: none; width: 2.3em; height: 1.3em; border-radius: 1em; background: #cfd3da; position: relative; cursor: pointer; transition: background .15s; margin: 0; flex: none; }
+input.switch::before { content: ""; position: absolute; top: .15em; left: .15em; width: 1em; height: 1em; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: left .15s; }
+input.switch:checked { background: var(--accent); }
+input.switch:checked::before { left: 1.15em; }
+/* color: 圓形色票 + 色碼 */
+input.swatch { appearance: none; -webkit-appearance: none; width: 1.8em; height: 1.8em; padding: 0; border: 1px solid var(--line); border-radius: 50%; cursor: pointer; flex: none; background: none; }
+input.swatch::-webkit-color-swatch-wrapper { padding: 2px; }
+input.swatch::-webkit-color-swatch { border: none; border-radius: 50%; }
+.ctrl input.swatch.unset::-webkit-color-swatch { background: repeating-conic-gradient(#ddd 0 25%, #fff 0 50%) 50% / 8px 8px !important; }
+.grp .sub { margin: .5em .8em .1em; padding-top: .45em; border-top: 1px dashed var(--line); font-weight: 600; font-size: .9em; color: #555; }
+.grp .sub .gdesc { font-weight: normal; padding: .1em 0 0; }
+.ctrl .hex { font-family: ui-monospace, monospace; font-size: .9em; color: #555; flex: 1; }
+/* palette: 色條 */
+.pals { display: flex; flex-wrap: wrap; gap: .4em; padding: .2em .8em .6em; }
+.pal { display: flex; flex-direction: column; gap: .2em; padding: .3em; border: 1px solid var(--line); border-radius: 6px; background: #fff; cursor: pointer; font-size: .8em; color: #555; }
+.pal.on { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59,111,216,.15); }
+.pal .strip { display: flex; height: .9em; width: 6.5em; border-radius: 3px; overflow: hidden; background: repeating-linear-gradient(45deg, #eee 0 4px, #fff 4px 8px); }
+.pal .strip i { flex: 1; }
+textarea { width: 100%; font: 12px/1.4 ui-monospace, monospace; border: 1px solid var(--line); border-radius: 6px; padding: .5em; }
 #csv { height: 14em; }
 #binding { height: 8em; }
-button { padding: .15em .7em; border: 1px solid var(--line); border-radius: 3px; background: #fff; cursor: pointer; }
+button { padding: .2em .8em; border: 1px solid var(--line); border-radius: 5px; background: #fff; cursor: pointer; }
 button:hover:not(:disabled) { border-color: var(--fg); }
 button:disabled { opacity: .4; cursor: default; }
-.btns { display: flex; flex-wrap: wrap; gap: .4em; margin: .4em 0; }
+.btns { display: flex; flex-wrap: wrap; gap: .4em; margin: .4em 0 .7em; align-items: center; }
+.btns label { margin-left: auto; color: #555; display: flex; align-items: center; gap: .35em; }
 .hint { color: var(--dim); font-size: .85em; }
 #err { color: var(--err); white-space: pre-wrap; font-size: .85em; }
 #err:empty { display: none; }
-#stage { width: 640px; height: 400px; resize: both; overflow: hidden; border: 1px dashed var(--line); position: relative; }
-#size { color: var(--dim); font-size: .85em; margin-top: .3em; }
-#out { font: 12px/1.4 ui-monospace, monospace; color: #555; white-space: pre; }
+#stage { width: 640px; height: 400px; resize: both; overflow: hidden; border: 1px dashed var(--line); position: relative; flex: none; }
+/* 填滿: 圖跟著可用空間大小 */
+main.fit #stage { width: auto !important; height: auto !important; flex: 1; min-height: 200px; resize: none; }
+.bar { display: flex; gap: 1em; align-items: center; color: var(--dim); font-size: .85em; margin-top: .4em; flex: none; }
+.bar label { display: flex; align-items: center; gap: .35em; color: #555; }
+#out { font: 12px/1.4 ui-monospace, monospace; color: #555; white-space: pre; flex: none; }
+#out:empty { display: none; }
 </style>
 </head>
 <body>
@@ -57,6 +94,7 @@ button:disabled { opacity: .4; cursor: default; }
       <button id="reset">回預設</button>
       <button id="rerender">重畫</button>
       <button id="dump">印出 config</button>
+      <label><input type="checkbox" class="switch" id="show-desc" checked> 說明</label>
     </div>
     <div id="cfg"></div>
     <h2>資料 ( raw )</h2>
@@ -66,9 +104,12 @@ button:disabled { opacity: .4; cursor: default; }
     <div class="btns"><button id="apply">套用資料</button></div>
     <div class="hint">raw 用 CSV 編輯, 看起來是數字的欄位會轉成數字.</div>
   </aside>
-  <main>
+  <main class="fit">
     <div id="stage"></div>
-    <div id="size"></div>
+    <div class="bar">
+      <label><input type="checkbox" class="switch" id="fit" checked> 填滿視窗</label>
+      <span id="size"></span>
+    </div>
     <pre id="out"></pre>
   </main>
 </div>
