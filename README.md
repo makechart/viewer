@@ -82,7 +82,7 @@ engine 自己起一個 server，前端依賴走與 makechart 相同的路徑 `/a
  - helper：`mctest.combo {type: <[column bar]>, multiple: <[stack group]>}` 產生所有組合，`mctest.label o` 把組合轉成名字，`mctest.random seed` 是固定種子的亂數。
  - `skip: true` 略過。`suite.chart` 預設是 package.json 的 name。
  - `block`：圖的 block data ( 例如地圖的 `{level: \town}` )，suite 與 case 都可以給，case 的優先。
-   playground 用網址參數 `?block=<json>`。
+   playground 選 case 時也套用 ( block 不同就重建圖 )；case 與 suite 都沒給時用網址參數 `?block=<json>`。
  - `timeout`：整個 case ( 載入、第一次畫完、所有 step ) 超過這麼多 ms 就算 `error`，訊息會寫停在哪一步。
    suite 與 case 都可以給，預設 30000。
 

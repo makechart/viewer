@@ -245,12 +245,42 @@ case-data = (c) ->
   if typeof(d) == \function => d = d!
   clone d
 
+# 圖的 block data ( 例如地圖的 level ): case 與 suite 有給就用 ( case 的優先, 同 suite.ls ), 否則用網址的 ?block=
+url-block = ->
+  try JSON.parse((new URLSearchParams(location.search)).get(\block) or '{}')
+  catch e
+    console.warn "[mctest] bad ?block=", e
+    {}
+case-block = (c) ->
+  if !(c.suite.block or c.block) => return url-block!
+  {} <<< (c.suite.block or {}) <<< (c.block or {})
+
+# 建圖. block 不同就重建 ( block data 只在 create 時給得進去 )
+make-chart = (block = {}) ->
+  key = JSON.stringify block
+  if pg.chart and pg.block == key => return Promise.resolve pg.chart
+  mctest.manager.get {name: mctest.info.name, version: \main}
+    .then (bc) -> bc.create {data: block}
+    .then (bi) ->
+      if pg.chart and pg.chart.destroy => try pg.chart.destroy! catch e => console.warn "[mctest] destroy:", e
+      $(\#stage).textContent = ''
+      bi.attach({root: $(\#stage)}).then -> bi.interface!
+    .then (chart) ->
+      pg.chart = window.chart = chart
+      pg.block = key
+      $(\#block).textContent = if key == '{}' => '' else "block #key"
+      chart
+
 pg.apply-case = (c) ->
-  set-size (c.size or c.suite.size)
-  pg.reset-config mctest.merge({}, clone(c.suite.config or {}), clone(c.config or {}))
-  if (d = case-data c) => pg.set-data d
-  $(\#steps).disabled = !c.steps
   pg.case = c
+  make-chart case-block(c)
+    .then ->
+      $(\#err).textContent = ''
+      set-size (c.size or c.suite.size)
+      pg.reset-config mctest.merge({}, clone(c.suite.config or {}), clone(c.config or {}))
+      if (d = case-data c) => pg.set-data d
+      $(\#steps).disabled = !c.steps
+    .catch (e) -> $(\#err).textContent = String(e.stack or e)
 
 # steps 拿到的 ctx 是簡化過的: snap 只是停一下讓人看得到那一格
 pg.run-steps = ->
@@ -267,18 +297,11 @@ mctest.boot!
   .then ->
     $(\#target).textContent = "#{mctest.info.name}@#{mctest.info.version}"
     document.title = "playground · #{mctest.info.name}"
-    mctest.manager.get {name: mctest.info.name, version: \main}
-  # ?block=<json>: 圖的 block data, 例如 ?block={"level":"town"}
-  .then (bc) ->
-    data = {}
-    try
-      data = JSON.parse((new URLSearchParams(location.search)).get(\block) or '{}')
-    catch e
-      console.warn "[mctest] bad ?block=", e
-    bc.create {data}
-  .then (bi) -> bi.attach({root: $(\#stage)}).then -> bi.interface!
+  .then ->
+    cases = mctest.cases.filter -> !it.dash and !it.skip
+    # 起點的圖: 第一個 case 的 block, 沒有 case 就用網址的 ?block=<json> ( 例如 ?block={"level":"town"} )
+    make-chart(if cases.length => case-block(cases.0) else url-block!)
   .then (chart) ->
-    pg.chart = window.chart = chart
     # case 選單
     sel = $ \#case
     cases = mctest.cases.filter -> !it.dash and !it.skip

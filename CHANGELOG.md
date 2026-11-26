@@ -1,5 +1,13 @@
 # Change Logs
 
+## v0.0.10
+
+ - playground: picking a case applies its `block` ( suite and case, the case's first, same as the run ), and the
+   chart is created again when the block differs - a map's `state/CA` case used to draw on the chart made from
+   `?block=` ( or none ), so its data matched nothing. `?block=<json>` is used when neither gives one. the block
+   in use is shown under the chart
+
+
 ## v0.0.9
 
  - `mctest serve --no-run`: the UI doesn't run the cases when opened ( `/?norun` ), press run to start - opening
